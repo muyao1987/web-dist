@@ -1,0 +1,24 @@
+{
+  "name": "webdist",
+  "version": "1.0.0",
+  "main": "gulpfile.js",
+  "scripts": {
+    "build": "gulp build"
+  },
+  "keywords": ["marsgis", "web" , "dist" ],
+  "author": "木遥 QQ：346819890",
+  "description": "合肥火星科技 整站压缩处理工具 http://www.marsgis.cn",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-clean-css": "^3.9.4",
+    "gulp-concat": "^2.6.1",
+    "gulp-header": "^2.0.5",
+    "gulp-htmlmin": "^4.0.0",
+    "gulp-imagemin": "^3.4.0",
+    "gulp-uglify": "^3.0.0",
+    "gulp-utf8-convert": "^0.0.7",
+    "imagemin-pngquant": "^5.0.1",
+    "gulp-util": "^3.0.8"
+  }
+}
