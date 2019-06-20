@@ -1,5 +1,5 @@
 {
-  "name": "webdist",
+  "name": "web-dist",
   "version": "1.0.0",
   "main": "gulpfile.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "gulp-imagemin": "^3.4.0",
     "gulp-uglify": "^3.0.0",
     "gulp-utf8-convert": "^0.0.7",
-    "imagemin-pngquant": "^5.0.1",
-    "gulp-util": "^3.0.8"
+    "gulp-util": "^3.0.8",
+    "imagemin-pngquant": "^5.0.1"
   }
 }

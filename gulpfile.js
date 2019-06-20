@@ -1,6 +1,6 @@
 'use strict';
 //////////////////////////以下参数可以根据实际情况调整/////////////////////
-var copyright = "版权所有 合肥火星科技有限公司 http://www.marsgis.cn  【联系我们QQ：516584683，微信：marsgis】";
+var copyright = "版权所有 火星科技 http://marsgis.cn  【联系我们 微信：muyao1987  邮箱 wh@marsgis.cn】";
 
 //需要压缩混淆的根目录
 var srcPath = 'src';
@@ -9,16 +9,18 @@ var srcPath = 'src';
 var distPath = 'dist';
 
 //排除不拷贝的文件类型后缀
-var noCopyFileType = ["psd", "doc", "rar", "docx", "txt", "sln", "suo", "md"];
+var noCopyFileType = ["psd", "doc", "docx", "txt", "sln", "suo", "md", "zip", "rar"];
 
 //定义不做压缩混淆直接拷贝的目录
 var noPipePath = [
-   srcPath + '\\lib\\Cesium'
+    srcPath + '\\lib\\Cesium'
 ];
 
 //排除不拷贝的目录 
 var noCopyPath = [
-   srcPath + '\\echarts', 
+    srcPath + '\\.svn',
+    srcPath + '\\.vscode', 
+    srcPath + '\\.git', 
 ];
 
 /////////////////////////////////////////////////////
