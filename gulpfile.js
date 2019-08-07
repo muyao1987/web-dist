@@ -1,204 +1,235 @@
-'use strict';
+//在gulpfile中先载入gulp包，因为这个包提供了一些API
+const gulp = require('gulp');
+const babel = require('gulp-babel');
+const babelCore = require("@babel/core");
+const utf8Convert = require('gulp-utf8-convert');
+const uglify = require('gulp-uglify');
+const header = require('gulp-header');
+const htmlmin = require('gulp-htmlmin');
+const cheerio = require('gulp-cheerio');
+// const UglifyJS = require('uglify-js');
+const cssmin = require('gulp-clean-css');
+const imagemin = require('gulp-imagemin');
+const pngquant = require('imagemin-pngquant');
+const GulpUtil = require('gulp-util');
+
+const fs = require('fs');
+const path = require('path');
+
+
 //////////////////////////以下参数可以根据实际情况调整/////////////////////
-var copyright = "版权所有 火星科技 http://marsgis.cn  【联系我们 微信：muyao1987  邮箱 wh@marsgis.cn】";
+const copyright = "版权所有 火星科技 http://marsgis.cn  【联系我们 微信：muyao1987  邮箱 wh@marsgis.cn】";
 
 //需要压缩混淆的根目录
 var srcPath = 'src';
 
-//生成到的目标目录 
+//生成到的目标目录
 var distPath = 'dist';
 
+
 //排除不拷贝的文件类型后缀
-var noCopyFileType = ["psd", "doc", "docx", "txt", "sln", "suo", "md", "zip", "rar"];
+const noCopyFileType = [".psd", ".doc", ".docx", ".txt", ".sln", ".suo", ".md", ".zip", ".rar"];
 
 //定义不做压缩混淆直接拷贝的目录
 var noPipePath = [
-    srcPath + '\\lib\\Cesium'
+  path.join(srcPath, 'lib', 'Cesium'),
+  path.join(srcPath, 'noMixin')
 ];
 
-//排除不拷贝的目录 
+//排除不拷贝的目录
 var noCopyPath = [
-    srcPath + '\\.svn',
-    srcPath + '\\.vscode', 
-    srcPath + '\\.git', 
+  path.join(srcPath, '.svn'),
+  path.join(srcPath, '.vscode'),
+  path.join(srcPath, '.git'),
 ];
 
-/////////////////////////////////////////////////////
+
+////////////////////压缩混淆////////////////////
+const fileList = [];
+gulp.task('build', done => {
+  // console.log('--------代码编译开始--------');
+
+  console.log('开始处理目录：' + srcPath);
+  console.log('生成至目录：' + distPath);
+
+  travel(srcPath);
 
 
-//在gulpfile中先载入gulp包，因为这个包提供了一些API
-var gulp = require('gulp');
-var concat = require('gulp-concat');
-var uglify = require('gulp-uglify');
-var cssmin = require('gulp-clean-css');
-var htmlmin = require('gulp-htmlmin');
-var header = require('gulp-header');
-var imagemin = require('gulp-imagemin');
-var pngquant = require('imagemin-pngquant');
-var utf8Convert = require('gulp-utf8-convert');
-var gutil = require('gulp-util')
+  fileList.forEach(t => {
+    const outFilePath = distPath + path.parse(t.pathname).dir.replace(srcPath, "");
+    let stat = fs.statSync(t.pathname);
 
-var fs = require('fs');
-var path = require("path");
+    // console.log('完成：' + t.pathname + "   至 " + outFilePath);
 
-
-//压缩混淆 
-gulp.task('build', function () {
-    console.log('开始处理目录：' + srcPath);
-    console.log('生成至目录：' + distPath);
-
-    travel(srcPath, function (pathname) {
-        var fileType = getFileType(pathname);
-
-        //排除不拷贝的文件类型和目录
-        if (noCopyFileType.indexOf(fileType) != -1) return;
-        for (var jj = 0; jj < noCopyPath.length; jj++) {
-            if (pathname.startsWith(noCopyPath[jj])) {
-                return;
+    let bannerData = { date: stat.mtime.format("yyyy-M-d HH:mm:ss") };
+    let banner = '/* <%= date %> | ' + copyright + ' */\n';
+    let bannerHtml = '<!-- <%= date %> | ' + copyright + ' -->\n';
+    switch (t.fileType) {
+      case '.js':
+        gulp.src(t.pathname)
+          .pipe(utf8Convert({
+            encNotMatchHandle: function (file) {
+              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请修改！本次将不对该文件做任何处理！");
             }
-        }
-
-        //直接拷贝，不做处理的目录
-        for (var jj = 0; jj < noPipePath.length; jj++) {
-            if (pathname.startsWith(noPipePath[jj])) {
-                fileType = "";
-                break;
+          }))
+          .pipe(babel({
+            presets: ['@babel/preset-env'],
+            sourceType: "script",
+            compact: false
+          }))
+          .pipe(uglify().on('error', function () {
+            this.emit('end');
+            throwOnlyCopy(t.pathname, outFilePath, err);
+          }))
+          .pipe(header(banner, bannerData))
+          .pipe(gulp.dest(outFilePath))
+        break
+      case ".html":
+        gulp.src(t.pathname)
+          .pipe(utf8Convert({
+            encNotMatchHandle: function (file) {
+              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请修改！本次将不对该文件做任何处理！");
             }
-        }
+          }))
+          .pipe(cheerio({
+            run: function ($, file) {
+              $('script').each(function () { // html内联js编译
+                const script = $(this);
+                try {
+                  if (!script.attr('src')) {
+                    const scriptHtml = script.html();
+                    const result = babelCore.transformSync(scriptHtml, {
+                      presets: ['@babel/preset-env'],
+                      sourceType: "script",
+                      compact: false
+                    });
+                    // const code = UglifyJS.minify(result.code, { mangle: { toplevel: true } }).code;
+                    script.html(result.code);
+                  }
+                } catch (err) {
+                  GulpUtil.log(GulpUtil.colors.yellow(err));
+                }
+              });
+            }
+          }))
+          .pipe(htmlmin({
+            collapseWhitespace: true,           //从字面意思应该可以看出来，清除空格，压缩html，这一条比较重要，作用比较大，引起的改变压缩量也特别大。
+            collapseBooleanAttributes: true,    //省略布尔属性的值，比如：<input checked="checked"/>,那么设置这个属性后，就会变成 <input checked/>。
+            removeComments: true,               //清除html中注释的部分，我们应该减少html页面中的注释。
+            removeEmptyAttributes: true,        //清除所有的空属性。
+            removeScriptTypeAttributes: true,   //清除所有script标签中的type="text/javascript"属性。
+            removeStyleLinkTypeAttributes: true,  //清楚所有Link标签上的type属性。
+            minifyJS: true,     //压缩html中的javascript代码。
+            minifyCSS: true     //压缩html中的css代码。
+          }))
+          .pipe(header(bannerHtml, bannerData))
+          .pipe(gulp.dest(outFilePath));
+        break;
+      case ".css":
+        gulp.src(t.pathname)
+          .pipe(utf8Convert({
+            encNotMatchHandle: function (file) {
+              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请修改！本次将不对该文件做任何更改！");
+            }
+          }))
+          .pipe(cssmin({
+            advanced: false,            //类型：Boolean 默认：true [是否开启高级优化（合并选择器等）]
+            compatibility: 'ie8',       //保留ie7及以下兼容写法 类型：String 默认：''or'*' [启用兼容模式； 'ie7'：IE7兼容模式，'ie8'：IE8兼容模式，'*'：IE9+兼容模式]
+            keepSpecialComments: '*'    //保留所有特殊前缀 当你用autoprefixer生成的浏览器前缀，如果不加这个参数，有可能将会删除你的部分前缀
+          }))
+          .pipe(header(banner, bannerData))
+          .pipe(gulp.dest(outFilePath));
+        break;
+      case "png":
+      case "jpg":
+      case "gif":
+      case "ico":
+        gulp.src(t.pathname)
+          .pipe(imagemin({
+            //optimizationLevel: 5,   //类型：Number  默认：3  取值范围：0-7（优化等级）
+            progressive: true,      //类型：Boolean 默认：false 无损压缩jpg图片
+            use: [pngquant()]       //使用pngquant深度压缩png图片的imagemin插件
+          }))
+          .pipe(gulp.dest(outFilePath));
+        break;
+      default:
+        gulp.src(t.pathname).pipe(gulp.dest(outFilePath));
+        break;
+    }
+  })
+  done();
 
-
-        var filePath = distPath + getFilePath(pathname).replace(srcPath, "");
-        var stat = fs.statSync(pathname);
-        var bannerData = { date: stat.mtime.format("yyyy-M-d HH:mm:ss") };
-
-        var banner = '/* <%= date %> | ' + copyright + ' */\n';
-        var bannerHtml = '<!-- <%= date %> | ' + copyright + ' -->\n';
-
-        //console.log('完成：' + pathname + "   至 " + filePath);
-
-        switch (fileType) {
-            default:
-                gulp.src(pathname)
-                    .pipe(gulp.dest(filePath));
-                break;
-            case "html":
-                gulp.src(pathname)
-                    .pipe(utf8Convert({
-                        encNotMatchHandle: function (file) {
-                            console.log(file + " 编码可能不是utf-8，避免乱码请修改！");
-                        }
-                    }))
-                    .pipe(htmlmin({
-                        collapseWhitespace: true,           //从字面意思应该可以看出来，清除空格，压缩html，这一条比较重要，作用比较大，引起的改变压缩量也特别大。
-                        collapseBooleanAttributes: true,    //省略布尔属性的值，比如：<input checked="checked"/>,那么设置这个属性后，就会变成 <input checked/>。
-                        removeComments: true,               //清除html中注释的部分，我们应该减少html页面中的注释。
-                        removeEmptyAttributes: true,        //清除所有的空属性。
-                        removeScriptTypeAttributes: true,   //清除所有script标签中的type="text/javascript"属性。
-                        removeStyleLinkTypeAttributes: true,  //清楚所有Link标签上的type属性。
-                        minifyJS: true,     //压缩html中的javascript代码。
-                        minifyCSS: true     //压缩html中的css代码。
-                    }))
-                    .pipe(header(bannerHtml, bannerData))
-                    .pipe(gulp.dest(filePath));
-                break;
-            case "css":
-                gulp.src(pathname)
-                    .pipe(utf8Convert({
-                        encNotMatchHandle: function (file) {
-                            console.log(file + " 编码可能不是utf-8，避免乱码请修改！");
-                        }
-                    }))
-                    .pipe(cssmin({
-                        advanced: false,            //类型：Boolean 默认：true [是否开启高级优化（合并选择器等）]
-                        compatibility: 'ie8',       //保留ie7及以下兼容写法 类型：String 默认：''or'*' [启用兼容模式； 'ie7'：IE7兼容模式，'ie8'：IE8兼容模式，'*'：IE9+兼容模式]
-                        keepSpecialComments: '*'    //保留所有特殊前缀 当你用autoprefixer生成的浏览器前缀，如果不加这个参数，有可能将会删除你的部分前缀
-                    }))
-                    .pipe(header(banner, bannerData))
-                    .pipe(gulp.dest(filePath));
-                break;
-
-            case "js":
-                gulp.src(pathname)
-                    .pipe(utf8Convert({
-                        encNotMatchHandle: function (file) {
-                            console.log(file + " 编码可能不是utf-8，避免乱码请修改！");
-                        }
-                    }))
-                    .pipe(uglify().on('error', function (err) {
-                        gutil.log(err);
-                        this.emit('end');
-                    }))
-                    .pipe(header(banner, bannerData))
-                    .pipe(gulp.dest(filePath));
-                break;
-            case "png":
-            case "jpg":
-            case "gif":
-            case "ico":
-                gulp.src(pathname)
-                    .pipe(imagemin({
-                        //optimizationLevel: 5,   //类型：Number  默认：3  取值范围：0-7（优化等级）
-                        progressive: true,      //类型：Boolean 默认：false 无损压缩jpg图片
-                        use: [pngquant()]       //使用pngquant深度压缩png图片的imagemin插件
-                    }))
-                   .pipe(gulp.dest(filePath));
-                break;
-
-        }
-    });
-
-
-
+  // console.log('--------代码编译完成--------');
 });
 
 
+
 //遍历目录获取文件列表
-function travel(dir, callback) {
-    fs.readdirSync(dir).forEach(function (file) {
-        var pathname = path.join(dir, file);
+function travel(dir) {
+  fs.readdirSync(dir).forEach(function (file) {
+    let pathname = path.join(dir, file);
+    if (fs.statSync(pathname).isDirectory()) {
+      if (noCopyPath.some(t => pathname.indexOf(t) !== -1)) { //文件不会生成到目标目录中
+        // console.log(`noCopyPath:${pathname}`);
+        return;
+      } else {
+        travel(pathname);
+      }
+    } else {
+      let fileType = path.parse(pathname).ext;
 
-        if (fs.statSync(pathname).isDirectory()) {
-            travel(pathname, callback);
-        } else {
-            callback(pathname);
-        }
-    });
+      if (noCopyPath.some(t => pathname.indexOf(t) !== -1)) { //文件不会生成到目标目录中
+        // console.log(`noCopyPath:${pathname}`);
+        return;
+      }
+      if (noCopyFileType.indexOf(fileType) !== -1) { //不压缩的文件类型
+        // console.log(`noCopyFile:${pathname}`);
+        return
+      }
+
+      if (noPipePath.some(t => pathname.indexOf(t) !== -1)) { //不做压缩处理
+        // console.log(`noPipePath:${pathname}`)
+        fileType = "";
+      }
+
+      fileList.push({
+        pathname,
+        fileType
+      })
+    }
+  });
 }
 
-//获取后缀名
-function getFileType(url) {
-    var arr = url.split('.');
-    var len = arr.length;
-    return arr[len - 1];
+
+
+// 抛出错误信息，直接copy文件
+function throwOnlyCopy(pathname, outFilePath, message) {
+  GulpUtil.log(GulpUtil.colors.red(`[Warn] ${pathname} ${message}`));
+  if (pathname && outFilePath) {
+    gulp.src(pathname).pipe(gulp.dest(outFilePath));
+  }
 }
 
-function getFilePath(url) {
-    return url.substring(0, url.lastIndexOf("\\") + 1);
-}
+
 
 Date.prototype.format = function (fmt) {
-    var o = {
-        "M+": this.getMonth() + 1, //月份       
-        "d+": this.getDate(), //日       
-        "h+": this.getHours() % 12 == 0 ? 12 : this.getHours() % 12, //小时       
-        "H+": this.getHours(), //小时       
-        "m+": this.getMinutes(), //分       
-        "s+": this.getSeconds(), //秒       
-        "q+": Math.floor((this.getMonth() + 3) / 3), //季度       
-        "S": this.getMilliseconds() //毫秒       
-    };
-    if (/(y+)/.test(fmt)) {
-        fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+  var o = {
+    "M+": this.getMonth() + 1, //月份
+    "d+": this.getDate(), //日
+    "h+": this.getHours() % 12 == 0 ? 12 : this.getHours() % 12, //小时
+    "H+": this.getHours(), //小时
+    "m+": this.getMinutes(), //分
+    "s+": this.getSeconds(), //秒
+    "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+    "S": this.getMilliseconds() //毫秒
+  };
+  if (/(y+)/.test(fmt)) {
+    fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+  }
+  for (var k in o) {
+    if (new RegExp("(" + k + ")").test(fmt)) {
+      fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     }
-    for (var k in o) {
-        if (new RegExp("(" + k + ")").test(fmt)) {
-            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-        }
-    }
-    return fmt;
-};
-if (typeof String.prototype.startsWith != 'function') {
-    String.prototype.startsWith = function (str) {
-        return this.slice(0, str.length) == str;
-    };
+  }
+  return fmt;
 };
