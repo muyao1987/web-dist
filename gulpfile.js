@@ -18,7 +18,7 @@ const path = require('path');
 
 
 //////////////////////////以下参数可以根据实际情况调整/////////////////////
-const copyright = "版权所有 火星科技 http://marsgis.cn  【联系我们 微信：muyao1987  邮箱 wh@marsgis.cn】";
+const copyright = "版权所有 火星科技 http://marsgis.cn";
 
 //需要压缩混淆的根目录
 var srcPath = 'src';
@@ -32,14 +32,13 @@ const noCopyFileType = [".psd", ".doc", ".docx", ".txt", ".sln", ".suo", ".md", 
 
 //定义不做压缩混淆直接拷贝的目录
 var noPipePath = [
-  path.join(srcPath, 'lib', 'Cesium'),
-  path.join(srcPath, 'noMixin')
+  path.join(srcPath, 'lib', 'Cesium')
 ];
 
 //排除不拷贝的目录
 var noCopyPath = [
-  path.join(srcPath, '.svn'),
   path.join(srcPath, '.vscode'),
+  path.join(srcPath, '.svn'),
   path.join(srcPath, '.git'),
 ];
 
@@ -69,7 +68,7 @@ gulp.task('build', done => {
         gulp.src(t.pathname)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请修改！本次将不对该文件做任何处理！");
+              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(babel({
@@ -88,7 +87,7 @@ gulp.task('build', done => {
         gulp.src(t.pathname)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请修改！本次将不对该文件做任何处理！");
+              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(cheerio({
@@ -103,24 +102,24 @@ gulp.task('build', done => {
                       sourceType: "script",
                       compact: false
                     });
-                    // const code = UglifyJS.minify(result.code, { mangle: { toplevel: true } }).code;
-                    script.html(result.code);
+                    script.text(result.code);
                   }
                 } catch (err) {
-                  GulpUtil.log(GulpUtil.colors.yellow(err));
+                  GulpUtil.log(GulpUtil.colors.red(err));
+                  throwOnlyCopy(t.pathname, outFilePath, "html内联js编译错误！");
                 }
               });
             }
           }))
           .pipe(htmlmin({
-            collapseWhitespace: true,           //从字面意思应该可以看出来，清除空格，压缩html，这一条比较重要，作用比较大，引起的改变压缩量也特别大。
-            collapseBooleanAttributes: true,    //省略布尔属性的值，比如：<input checked="checked"/>,那么设置这个属性后，就会变成 <input checked/>。
-            removeComments: true,               //清除html中注释的部分，我们应该减少html页面中的注释。
-            removeEmptyAttributes: true,        //清除所有的空属性。
-            removeScriptTypeAttributes: true,   //清除所有script标签中的type="text/javascript"属性。
-            removeStyleLinkTypeAttributes: true,  //清楚所有Link标签上的type属性。
-            minifyJS: true,     //压缩html中的javascript代码。
-            minifyCSS: true     //压缩html中的css代码。
+            collapseWhitespace: true,           //清除空格，压缩html，作用比较大，引起的改变压缩量也特别大
+            collapseBooleanAttributes: true,    //省略布尔属性的值，比如：<input checked="checked"/>,那么设置这个属性后，就会变成 <input checked/>
+            removeComments: true,               //清除html中注释
+            removeEmptyAttributes: true,        //清除所有的空属性
+            removeScriptTypeAttributes: true,   //清除所有script标签中的type="text/javascript"属性
+            removeStyleLinkTypeAttributes: true,  //清楚所有Link标签上的type属性
+            minifyJS: true,     //压缩html中的javascript代码
+            minifyCSS: true     //压缩html中的css代码
           }))
           .pipe(header(bannerHtml, bannerData))
           .pipe(gulp.dest(outFilePath));
@@ -129,7 +128,7 @@ gulp.task('build', done => {
         gulp.src(t.pathname)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请修改！本次将不对该文件做任何更改！");
+              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(cssmin({
@@ -186,7 +185,10 @@ function travel(dir) {
         // console.log(`noCopyFile:${pathname}`);
         return
       }
-
+      if (noPipePath.some(t => pathname.indexOf("\\Cesium\\") !== -1)) { //不对Cesium目录压缩 
+        fileType = "";
+        console.log(`Cesium:${pathname}`)
+      }
       if (noPipePath.some(t => pathname.indexOf(t) !== -1)) { //不做压缩处理
         // console.log(`noPipePath:${pathname}`)
         fileType = "";
@@ -204,7 +206,7 @@ function travel(dir) {
 
 // 抛出错误信息，直接copy文件
 function throwOnlyCopy(pathname, outFilePath, message) {
-  GulpUtil.log(GulpUtil.colors.red(`[Warn] ${pathname} ${message}`));
+  GulpUtil.log(GulpUtil.colors.red(`[错误] ${pathname} ${message}`));
   if (pathname && outFilePath) {
     gulp.src(pathname).pipe(gulp.dest(outFilePath));
   }
