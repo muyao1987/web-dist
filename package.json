@@ -5,7 +5,12 @@
   "scripts": {
     "build": "gulp build"
   },
-  "keywords": ["marsgis", "lib", "web" , "dist" ],
+  "keywords": [
+    "marsgis",
+    "lib",
+    "web",
+    "dist"
+  ],
   "author": "木遥 QQ：346819890",
   "description": "合肥火星科技 整站压缩处理工具 http://www.marsgis.cn",
   "license": "ISC",
@@ -20,12 +25,10 @@
     "gulp-concat": "^2.6.1",
     "gulp-header": "^2.0.7",
     "gulp-htmlmin": "^5.0.1",
-    "gulp-imagemin": "^6.0.0",
+    "gulp-imagemin": "^4.1.0",
     "gulp-uglify": "^3.0.2",
     "gulp-utf8-convert": "0.0.7",
-    "gulp-util": "^3.0.8",
-    "imagemin-pngquant": "^8.0.0",
-    "uglify-js": "^3.6.0"
+    "imagemin-pngquant": "^8.0.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.5.4"

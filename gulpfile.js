@@ -6,12 +6,10 @@ const utf8Convert = require('gulp-utf8-convert');
 const uglify = require('gulp-uglify');
 const header = require('gulp-header');
 const htmlmin = require('gulp-htmlmin');
-const cheerio = require('gulp-cheerio');
-// const UglifyJS = require('uglify-js');
+const cheerio = require('gulp-cheerio'); 
 const cssmin = require('gulp-clean-css');
 const imagemin = require('gulp-imagemin');
-const pngquant = require('imagemin-pngquant');
-const GulpUtil = require('gulp-util');
+const pngquant = require('imagemin-pngquant'); 
 
 const fs = require('fs');
 const path = require('path');
@@ -105,7 +103,7 @@ gulp.task('build', done => {
                     script.text(result.code);
                   }
                 } catch (err) {
-                  GulpUtil.log(GulpUtil.colors.red(err));
+                  console.log(err);
                   throwOnlyCopy(t.pathname, outFilePath, "html内联js编译错误！");
                 }
               });
@@ -206,7 +204,7 @@ function travel(dir) {
 
 // 抛出错误信息，直接copy文件
 function throwOnlyCopy(pathname, outFilePath, message) {
-  GulpUtil.log(GulpUtil.colors.red(`[错误] ${pathname} ${message}`));
+  console.log(`[错误] ${pathname} ${message}`);
   if (pathname && outFilePath) {
     gulp.src(pathname).pipe(gulp.dest(outFilePath));
   }
