@@ -1,36 +1,49 @@
 {
   "name": "web-dist",
-  "version": "2.0.0",
+  "version": "2.0.1",
+  "description": "传统模式下开发的web整站压缩混淆处理工具",
   "main": "gulpfile.js",
-  "scripts": {
-    "build": "gulp build"
-  },
   "keywords": [
     "marsgis",
     "lib",
     "web",
     "dist"
-  ],
-  "author": "木遥 QQ：346819890",
-  "description": "合肥火星科技 整站压缩处理工具 http://www.marsgis.cn",
-  "license": "ISC",
+  ], 
+  "scripts": {
+    "build": "gulp build"
+  },
   "devDependencies": {
     "@babel/core": "^7.5.4",
     "@babel/plugin-transform-runtime": "^7.5.0",
     "@babel/preset-env": "^7.5.4",
-    "gulp": "^3.9.1",
+    "@babel/runtime": "^7.5.4",
+    "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-cheerio": "^0.6.3",
     "gulp-clean-css": "^4.2.0",
     "gulp-concat": "^2.6.1",
     "gulp-header": "^2.0.7",
     "gulp-htmlmin": "^5.0.1",
-    "gulp-imagemin": "^4.1.0",
+    "gulp-imagemin": "^7.1.0",
     "gulp-uglify": "^3.0.2",
     "gulp-utf8-convert": "0.0.7",
-    "imagemin-pngquant": "^8.0.0"
+    "gulp-util": "^3.0.8",
+    "imagemin-pngquant": "^8.0.0",
+    "uglify-js": "^3.6.0"
   },
-  "dependencies": {
-    "@babel/runtime": "^7.5.4"
-  }
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/muyao1987/web-dist.git"
+  },
+  "bugs": {
+    "url": "https://github.com/muyao1987/web-dist/issues",
+    "email": "wh@marsgis.cn"
+  },
+  "author": {
+    "name": "火星科技 木遥",
+    "url": "http://www.marsgis.cn"
+  },
+  "license": "ISC",
+  "homepage": "https://github.com/muyao1987/web-dist"
 }

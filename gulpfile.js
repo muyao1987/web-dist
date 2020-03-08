@@ -6,10 +6,10 @@ const utf8Convert = require('gulp-utf8-convert');
 const uglify = require('gulp-uglify');
 const header = require('gulp-header');
 const htmlmin = require('gulp-htmlmin');
-const cheerio = require('gulp-cheerio'); 
+const cheerio = require('gulp-cheerio');
 const cssmin = require('gulp-clean-css');
 const imagemin = require('gulp-imagemin');
-const pngquant = require('imagemin-pngquant'); 
+const pngquant = require('imagemin-pngquant');
 
 const fs = require('fs');
 const path = require('path');
@@ -18,30 +18,37 @@ const path = require('path');
 //////////////////////////以下参数可以根据实际情况调整/////////////////////
 const copyright = "版权所有 火星科技 http://marsgis.cn";
 
+//排除不拷贝的文件类型后缀
+const noCopyFileType = [".psd", ".doc", ".docx", ".txt", ".md", ".zip", ".rar"];
+
+//定义不做压缩混淆直接拷贝的目录
+const noPipePathDef = [
+  '\\Cesium\\'
+];
+
+//排除不拷贝的目录
+const noCopyPathDef = [
+  '\\.svn',
+  '\\.git',
+  '\\.vscode',
+  '\\node_modules\\',
+];
+
+////////////////////自定义设置////////////////////
+
 //需要压缩混淆的根目录
 var srcPath = 'src';
 
 //生成到的目标目录
 var distPath = 'dist';
 
-
-//排除不拷贝的文件类型后缀
-const noCopyFileType = [".psd", ".doc", ".docx", ".txt", ".sln", ".suo", ".md", ".zip", ".rar"];
-
-//定义不做压缩混淆直接拷贝的目录
-var noPipePath = [
-  path.join(srcPath, 'lib', 'Cesium')
-];
-
-//排除不拷贝的目录
-var noCopyPath = [
-  path.join(srcPath, '.vscode'),
-  path.join(srcPath, '.svn'),
-  path.join(srcPath, '.git'),
-];
-
+var noPipePath = [];
+var noCopyPath = [];
+ 
 
 ////////////////////压缩混淆////////////////////
+
+
 const fileList = [];
 gulp.task('build', done => {
   // console.log('--------代码编译开始--------');
@@ -53,20 +60,28 @@ gulp.task('build', done => {
 
 
   fileList.forEach(t => {
-    const outFilePath = distPath + path.parse(t.pathname).dir.replace(srcPath, "");
-    let stat = fs.statSync(t.pathname);
-
-    // console.log('完成：' + t.pathname + "   至 " + outFilePath);
-
+    var srcFile = t.pathname;
+    // var srcFilePath = path.parse(srcFile).dir.replace(srcPath, "")
+    const outFilePath = distPath;
+ 
+    // console.log('读取：' + srcFile + '\n输出：' + outFilePath + '\n');
+ 
+    let stat = fs.statSync(srcFile);
     let bannerData = { date: stat.mtime.format("yyyy-M-d HH:mm:ss") };
     let banner = '/* <%= date %> | ' + copyright + ' */\n';
     let bannerHtml = '<!-- <%= date %> | ' + copyright + ' -->\n';
     switch (t.fileType) {
       case '.js':
-        gulp.src(t.pathname)
+        if (stat.size > 102400) {
+          optsObfuscator.controlFlowFlattening = false //大文件不建议为true，造成文件更大
+        }
+        else {
+          optsObfuscator.controlFlowFlattening = true
+        }
+        gulp.src(srcFile)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
+              throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(babel({
@@ -76,16 +91,16 @@ gulp.task('build', done => {
           }))
           .pipe(uglify().on('error', function () {
             this.emit('end');
-            throwOnlyCopy(t.pathname, outFilePath, err);
+            throwOnlyCopy(srcFile, outFilePath, err);
           }))
           .pipe(header(banner, bannerData))
           .pipe(gulp.dest(outFilePath))
         break
       case ".html":
-        gulp.src(t.pathname)
+        gulp.src(srcFile)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
+              throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(cheerio({
@@ -104,7 +119,7 @@ gulp.task('build', done => {
                   }
                 } catch (err) {
                   console.log(err);
-                  throwOnlyCopy(t.pathname, outFilePath, "html内联js编译错误！");
+                  throwOnlyCopy(srcFile, outFilePath, "html内联js编译错误！");
                 }
               });
             }
@@ -123,10 +138,10 @@ gulp.task('build', done => {
           .pipe(gulp.dest(outFilePath));
         break;
       case ".css":
-        gulp.src(t.pathname)
+        gulp.src(srcFile)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(t.pathname, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
+              throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(cssmin({
@@ -141,7 +156,7 @@ gulp.task('build', done => {
       case "jpg":
       case "gif":
       case "ico":
-        gulp.src(t.pathname)
+        gulp.src(srcFile)
           .pipe(imagemin({
             //optimizationLevel: 5,   //类型：Number  默认：3  取值范围：0-7（优化等级）
             progressive: true,      //类型：Boolean 默认：false 无损压缩jpg图片
@@ -150,7 +165,7 @@ gulp.task('build', done => {
           .pipe(gulp.dest(outFilePath));
         break;
       default:
-        gulp.src(t.pathname).pipe(gulp.dest(outFilePath));
+        gulp.src(srcFile).pipe(gulp.dest(outFilePath));
         break;
     }
   })
@@ -166,29 +181,27 @@ function travel(dir) {
   fs.readdirSync(dir).forEach(function (file) {
     let pathname = path.join(dir, file);
     if (fs.statSync(pathname).isDirectory()) {
-      if (noCopyPath.some(t => pathname.indexOf(t) !== -1)) { //文件不会生成到目标目录中
-        // console.log(`noCopyPath:${pathname}`);
-        return;
-      } else {
-        travel(pathname);
-      }
+
+      //排除不拷贝的目录，文件不会生成到目标目录中  
+      if (noCopyPathDef.some(t => pathname.indexOf(t) !== -1)) return;
+      if (noCopyPath.some(t => pathname.indexOf(t) !== -1)) return;
+
+      travel(pathname);
+
     } else {
       let fileType = path.parse(pathname).ext;
+      // console.log(pathname);
 
-      if (noCopyPath.some(t => pathname.indexOf(t) !== -1)) { //文件不会生成到目标目录中
-        // console.log(`noCopyPath:${pathname}`);
-        return;
-      }
-      if (noCopyFileType.indexOf(fileType) !== -1) { //不压缩的文件类型
-        // console.log(`noCopyFile:${pathname}`);
-        return
-      }
-      if (noPipePath.some(t => pathname.indexOf("\\Cesium\\") !== -1)) { //不对Cesium目录压缩 
-        fileType = "";
-        console.log(`Cesium:${pathname}`)
-      }
-      if (noPipePath.some(t => pathname.indexOf(t) !== -1)) { //不做压缩处理
-        // console.log(`noPipePath:${pathname}`)
+      //排除不拷贝的文件，文件不会生成到目标目录中 
+      if (noCopyPathDef.some(t => pathname.indexOf(t) !== -1)) return;
+      if (noCopyPath.some(t => pathname.indexOf(t) !== -1)) return;
+      if (noCopyFileType.indexOf(fileType) !== -1) return;
+
+      //不做压缩处理,直接原样拷贝过去
+      if (noPipePath.some(t => pathname.indexOf("\\Cesium\\") !== -1)//不对Cesium目录压缩 
+        || noPipePathDef.some(t => pathname.indexOf(t) !== -1)
+        || noPipePath.some(t => pathname.indexOf(t) !== -1)
+      ) {
         fileType = "";
       }
 
