@@ -71,13 +71,7 @@ gulp.task('build', done => {
     let banner = '/* <%= date %> | ' + copyright + ' */\n';
     let bannerHtml = '<!-- <%= date %> | ' + copyright + ' -->\n';
     switch (t.fileType) {
-      case '.js':
-        if (stat.size > 102400) {
-          optsObfuscator.controlFlowFlattening = false //大文件不建议为true，造成文件更大
-        }
-        else {
-          optsObfuscator.controlFlowFlattening = true
-        }
+      case '.js': 
         gulp.src(srcFile)
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
