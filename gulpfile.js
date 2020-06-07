@@ -72,7 +72,9 @@ gulp.task('build', done => {
     let bannerHtml = '<!-- <%= date %> | ' + copyright + ' -->\n';
     switch (t.fileType) {
       case '.js': 
-        gulp.src(srcFile)
+        gulp.src(srcFile, {
+          base: srcPath
+        })
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
               throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
@@ -91,7 +93,9 @@ gulp.task('build', done => {
           .pipe(gulp.dest(outFilePath))
         break
       case ".html":
-        gulp.src(srcFile)
+        gulp.src(srcFile, {
+          base: srcPath
+        })
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
               throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
@@ -132,7 +136,9 @@ gulp.task('build', done => {
           .pipe(gulp.dest(outFilePath));
         break;
       case ".css":
-        gulp.src(srcFile)
+        gulp.src(srcFile, {
+          base: srcPath
+        })
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
               throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
@@ -150,7 +156,9 @@ gulp.task('build', done => {
       case "jpg":
       case "gif":
       case "ico":
-        gulp.src(srcFile)
+        gulp.src(srcFile, {
+          base: srcPath
+        })
           .pipe(imagemin({
             //optimizationLevel: 5,   //类型：Number  默认：3  取值范围：0-7（优化等级）
             progressive: true,      //类型：Boolean 默认：false 无损压缩jpg图片
@@ -159,7 +167,9 @@ gulp.task('build', done => {
           .pipe(gulp.dest(outFilePath));
         break;
       default:
-        gulp.src(srcFile).pipe(gulp.dest(outFilePath));
+        gulp.src(srcFile, {
+          base: srcPath
+        }).pipe(gulp.dest(outFilePath));
         break;
     }
   })
