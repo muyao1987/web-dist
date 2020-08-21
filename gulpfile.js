@@ -61,9 +61,7 @@ gulp.task('build', done => {
 
   fileList.forEach(t => {
     var srcFile = t.pathname;
-    // var srcFilePath = path.parse(srcFile).dir.replace(srcPath, "")
     const outFilePath = distPath;
- 
     // console.log('读取：' + srcFile + '\n输出：' + outFilePath + '\n');
  
     let stat = fs.statSync(srcFile);
