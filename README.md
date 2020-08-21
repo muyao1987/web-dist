@@ -22,5 +22,9 @@
 2. 支持css、html、图片文件压缩
 3. 保持原项目的所有目录结构和其他格式文件的复制
  
+
+## 更高级的加密方式
+   访问 [ https://github.com/muyao1987/web-dist-pro]( https://github.com/muyao1987/web-dist-pro)，该仓库与本仓库基本相同，但采用了更复杂的js加密方式，更难以破解，但是也更容易出问题，可以酌情使用。
+
 ## 作者
   [火星科技](http://marsgis.cn/) - [木遥](https://work.weixin.qq.com/wework_admin/user/h5/qqmail_user_card/vc9b130b6638aebeb7)  
