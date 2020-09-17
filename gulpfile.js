@@ -48,6 +48,7 @@ var distPath = 'dist';
 var noPipePath = [];
 var noCopyPath = [];
  
+// lastTime = new Date("2020-08-01 08:00:00")
 
 ////////////////////压缩混淆////////////////////
 
