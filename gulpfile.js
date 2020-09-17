@@ -18,6 +18,9 @@ const path = require('path');
 //////////////////////////以下参数可以根据实际情况调整/////////////////////
 const copyright = "版权所有 火星科技 http://marsgis.cn";
 
+//这个时间后修改的文件不处理（增量更新时使用）
+var lastTime;
+
 //排除不拷贝的文件类型后缀
 const noCopyFileType = [".psd", ".doc", ".docx", ".txt", ".md", ".zip", ".rar"];
 
@@ -63,8 +66,12 @@ gulp.task('build', done => {
     var srcFile = t.pathname;
     const outFilePath = distPath;
     // console.log('读取：' + srcFile + '\n输出：' + outFilePath + '\n');
- 
+
     let stat = fs.statSync(srcFile);
+    if (lastTime != null && stat.mtime < lastTime) {
+      return;
+    }
+
     let bannerData = { date: stat.mtime.format("yyyy-M-d HH:mm:ss") };
     let banner = '/* <%= date %> | ' + copyright + ' */\n';
     let bannerHtml = '<!-- <%= date %> | ' + copyright + ' -->\n';
@@ -75,7 +82,7 @@ gulp.task('build', done => {
         })
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
+              throwOnlyCopy(srcPath, srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(babel({
@@ -85,7 +92,7 @@ gulp.task('build', done => {
           }))
           .pipe(uglify().on('error', function () {
             this.emit('end');
-            throwOnlyCopy(srcFile, outFilePath, err);
+            throwOnlyCopy(srcPath, srcFile, outFilePath, err);
           }))
           .pipe(header(banner, bannerData))
           .pipe(gulp.dest(outFilePath))
@@ -96,7 +103,7 @@ gulp.task('build', done => {
         })
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
+              throwOnlyCopy(srcPath, srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(cheerio({
@@ -115,7 +122,7 @@ gulp.task('build', done => {
                   }
                 } catch (err) {
                   console.log(err);
-                  throwOnlyCopy(srcFile, outFilePath, "html内联js编译错误！");
+                  throwOnlyCopy(srcPath, srcFile, outFilePath, "html内联js编译错误！");
                 }
               });
             }
@@ -139,7 +146,7 @@ gulp.task('build', done => {
         })
           .pipe(utf8Convert({
             encNotMatchHandle: function (file) {
-              throwOnlyCopy(srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
+              throwOnlyCopy(srcPath, srcFile, outFilePath, " 编码可能不是utf-8，避免乱码请检查！");
             }
           }))
           .pipe(cssmin({
@@ -218,10 +225,12 @@ function travel(dir) {
 
 
 // 抛出错误信息，直接copy文件
-function throwOnlyCopy(pathname, outFilePath, message) {
+function throwOnlyCopy(srcPath, pathname, outFilePath, message) {
   console.log(`[错误] ${pathname} ${message}`);
   if (pathname && outFilePath) {
-    gulp.src(pathname).pipe(gulp.dest(outFilePath));
+    gulp.src(pathname, {
+      base: srcPath
+    }).pipe(gulp.dest(outFilePath));
   }
 }
 
