@@ -8,8 +8,8 @@
 
 ## 使用
 1. 首次使用输入命令：`npm install` 或 `cnpm install`   安装依赖包
-2. 将需要压缩的站点放在src目录下，执行`npm  run  build` 命令后，结果站点会生成在disc目录下。
-3. 将disc目录拷贝至http服务容器中进行发布访问即可。
+2. 将需要压缩的站点放在src目录下，执行`npm  run  build` 命令后，结果站点会生成在dist目录下。
+3. 将dist目录拷贝至http服务容器中进行发布访问即可。
 
 ## 提示
 1. gulp4 对node版本有要求，可以百度查询学习下。
