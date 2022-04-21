@@ -1,6 +1,6 @@
 {
   "name": "web-dist",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "传统模式下开发的web整站压缩混淆处理工具",
   "main": "gulpfile.js",
   "keywords": [
@@ -45,6 +45,6 @@
     "name": "火星科技 木遥",
     "url": "http://www.marsgis.cn"
   },
-  "license": "ISC",
+  "license": "Apache-2.0",
   "homepage": "https://github.com/muyao1987/web-dist"
 }
