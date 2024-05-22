@@ -9,8 +9,6 @@ const header = require('gulp-header');
 const htmlmin = require('gulp-htmlmin');
 const cheerio = require('gulp-cheerio');
 const cssmin = require('gulp-clean-css');
-const imagemin = require('gulp-imagemin');
-const pngquant = require('imagemin-pngquant');
 
 const fs = require('fs');
 const path = require('path');
@@ -171,25 +169,6 @@ gulp.task('build', done => {
             keepSpecialComments: '*'    //保留所有特殊前缀 当你用autoprefixer生成的浏览器前缀，如果不加这个参数，有可能将会删除你的部分前缀
           }))
           .pipe(header(banner, bannerData))
-          .pipe(gulp.dest(outFilePath));
-        break;
-      case "png":
-      case "jpg":
-      case "gif":
-      case "ico":
-        gulp.src(srcFile, {
-          base: srcPath
-        })
-        .pipe(plumber({
-          errorHandler: function (err) { 
-            throwOnlyCopy(srcPath, srcFile, outFilePath, err);
-          }
-        }))
-          .pipe(imagemin({
-            //optimizationLevel: 5,   //类型：Number  默认：3  取值范围：0-7（优化等级）
-            progressive: true,      //类型：Boolean 默认：false 无损压缩jpg图片
-            use: [pngquant()]       //使用pngquant深度压缩png图片的imagemin插件
-          }))
           .pipe(gulp.dest(outFilePath));
         break;
       default:

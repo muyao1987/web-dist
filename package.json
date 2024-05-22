@@ -8,31 +8,28 @@
     "lib",
     "web",
     "dist"
-  ], 
+  ],
   "scripts": {
     "build": "gulp build"
   },
   "devDependencies": {
-    "@babel/core": "^7.5.4",
-    "@babel/plugin-transform-runtime": "^7.5.0",
-    "@babel/preset-env": "^7.5.4",
-    "@babel/runtime": "^7.5.4",
+    "@babel/core": "^7.24.5",
+    "@babel/plugin-transform-runtime": "^7.24.3",
+    "@babel/preset-env": "^7.24.5",
+    "@babel/runtime": "^7.24.5",
     "gulp": "^4.0.2",
     "gulp-babel": "^8.0.0",
     "gulp-cheerio": "^0.6.3",
-    "gulp-clean-css": "^4.2.0",
+    "gulp-clean-css": "^4.3.0",
     "gulp-concat": "^2.6.1",
-    "gulp-header": "^2.0.7",
+    "gulp-header": "^2.0.9",
     "gulp-htmlmin": "^5.0.1",
-    "gulp-imagemin": "^7.1.0",
     "gulp-plumber": "^1.2.1",
     "gulp-uglify": "^3.0.2",
     "gulp-utf8-convert": "0.0.7",
     "gulp-util": "^3.0.8",
-    "imagemin-pngquant": "^8.0.0",
-    "uglify-js": "^3.6.0"
+    "uglify-js": "^3.17.4"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/muyao1987/web-dist.git"
